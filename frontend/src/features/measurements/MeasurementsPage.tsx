@@ -67,7 +67,9 @@ export function MeasurementsPage() {
       measurements,
       new Map(sensors.map((sensor) => [sensor.id, sensor.name])),
     );
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
     const link = document.createElement("a");
     link.href = url;
     link.download = `energy-measurements-${from.slice(0, 10)}-${to.slice(0, 10)}.csv`;
@@ -87,7 +89,11 @@ export function MeasurementsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCsv} disabled={!measurements.length}>
+          <Button
+            variant="outline"
+            onClick={exportCsv}
+            disabled={!measurements.length}
+          >
             <Download className="h-4 w-4" /> Exporter CSV
           </Button>
           <Button

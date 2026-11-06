@@ -34,22 +34,50 @@ const alert: alertsApi.EnergyAlert = {
 describe("AlertsPage", () => {
   beforeEach(() => {
     vi.mocked(alertsApi.getAlerts).mockResolvedValue([alert]);
-    vi.mocked(alertsApi.acknowledgeAlert).mockResolvedValue({ ...alert, status: "ACKNOWLEDGED", acknowledgedBy: "operator" });
+    vi.mocked(alertsApi.acknowledgeAlert).mockResolvedValue({
+      ...alert,
+      status: "ACKNOWLEDGED",
+      acknowledgedBy: "operator",
+    });
     vi.mocked(equipmentApi.getSensors).mockResolvedValue([]);
-    vi.mocked(equipmentApi.getBuildings).mockResolvedValue([{ id: "building-1", name: "North Wing", location: "Campus", description: null, createdAt: "2026-01-01T00:00:00Z" }]);
+    vi.mocked(equipmentApi.getBuildings).mockResolvedValue([
+      {
+        id: "building-1",
+        name: "North Wing",
+        location: "Campus",
+        description: null,
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+    ]);
   });
 
   it("loads alerts, applies building filters and acknowledges after confirmation", async () => {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={queryClient}><AlertsPage /></QueryClientProvider>);
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AlertsPage />
+      </QueryClientProvider>,
+    );
 
     expect(await screen.findByText("POWER THRESHOLD")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Bâtiment"), { target: { value: "building-1" } });
-    await waitFor(() => expect(alertsApi.getAlerts).toHaveBeenLastCalledWith(expect.objectContaining({ buildingId: "building-1" })));
+    fireEvent.change(screen.getByLabelText("Bâtiment"), {
+      target: { value: "building-1" },
+    });
+    await waitFor(() =>
+      expect(alertsApi.getAlerts).toHaveBeenLastCalledWith(
+        expect.objectContaining({ buildingId: "building-1" }),
+      ),
+    );
     expect(await screen.findByText("POWER THRESHOLD")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Acquitter alert-1" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirmer l’acquittement" }));
-    await waitFor(() => expect(alertsApi.acknowledgeAlert).toHaveBeenCalledWith("alert-1"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmer l’acquittement" }),
+    );
+    await waitFor(() =>
+      expect(alertsApi.acknowledgeAlert).toHaveBeenCalledWith("alert-1"),
+    );
   });
 });

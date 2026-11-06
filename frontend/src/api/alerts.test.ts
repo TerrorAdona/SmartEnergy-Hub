@@ -7,7 +7,11 @@ describe("alerts API client", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
     fetchMock.mockReset();
-    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => [] });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [],
+    });
   });
 
   afterEach(() => vi.unstubAllGlobals());
