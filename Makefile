@@ -67,7 +67,7 @@ build-api:
 	cd backend && $(GRADLEW) :modules:api:build -x test
 
 run-api:
-	cd backend && $(GRADLEW) :modules:api:bootRun
+	cd backend && $(GRADLEW) :modules:api:bootRun --args='--spring.profiles.active=dev'
 
 test:
 	cd backend && $(GRADLEW) test

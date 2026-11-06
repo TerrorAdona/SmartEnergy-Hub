@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.context.request.WebRequest
+import org.springframework.http.converter.HttpMessageNotReadableException
 import java.time.Instant
 import java.util.UUID
 
@@ -24,6 +25,11 @@ class GlobalExceptionHandler {
             ValidationError(fieldError.field, fieldError.defaultMessage ?: "Invalid value", fieldError.rejectedValue)
         }
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation failed", "VALIDATION_ERROR", request, errors)
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadableMessage(ex: HttpMessageNotReadableException, request: WebRequest): ResponseEntity<ErrorResponse> {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Request body is invalid", "INVALID_REQUEST_BODY", request, emptyList())
     }
 
     @ExceptionHandler(Exception::class)

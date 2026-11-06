@@ -21,6 +21,7 @@ dependencies {
     implementation(project(":modules:core"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     testImplementation(project(":modules:core"))
     testImplementation(platform("org.junit:junit-bom:5.11.0"))

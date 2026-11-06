@@ -19,9 +19,12 @@ dependencyManagement {
 
 dependencies {
     implementation(project(":modules:core"))
+    implementation(project(":modules:equipment"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     testImplementation(project(":modules:core"))
     testImplementation(platform("org.junit:junit-bom:5.11.0"))

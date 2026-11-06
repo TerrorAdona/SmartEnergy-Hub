@@ -17,7 +17,7 @@ Energy monitoring platform — Master 1 university project.
 make up
 
 # Run backend (in separate terminal)
-cd backend && ./gradlew :modules:api:bootRun
+cd backend && ./gradlew :modules:api:bootRun --args='--spring.profiles.active=dev'
 
 # Run frontend (in separate terminal)
 cd frontend && npm install && npm run dev
