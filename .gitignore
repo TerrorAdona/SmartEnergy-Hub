@@ -1,0 +1,51 @@
+# Gradle
+.gradle/
+build/
+*/build/
+!*/src/main/resources/**/build.gradle.kts
+
+# Maven (if any)
+target/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Testcontainers
+testcontainers.properties
+
+# Generated
+frontend/src/api/generated/
+
+# Misc
+*.tmp
+*.temp
+.cache/

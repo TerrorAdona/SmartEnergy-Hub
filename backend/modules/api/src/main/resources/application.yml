@@ -1,0 +1,107 @@
+spring:
+  application:
+    name: smartenergy-api
+
+  # Server configuration
+  server:
+    port: 8080
+    servlet:
+      context-path: /api/v1
+
+  # Jackson configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    property-naming-strategy: SNAKE_CASE
+
+  # Cassandra configuration
+  data:
+    cassandra:
+      contact-points: ${CASSANDRA_HOST:localhost}:${CASSANDRA_PORT:9042}
+      keyspace-name: smartenergy
+      username: ${CASSANDRA_USERNAME:cassandra}
+      password: ${CASSANDRA_PASSWORD:cassandra}
+      schema-action: CREATE_IF_NOT_EXISTS
+      request:
+        timeout: 10s
+        consistency: LOCAL_QUORUM
+
+    # MongoDB configuration
+    mongodb:
+      uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/smartenergy
+      username: ${MONGO_USERNAME:}
+      password: ${MONGO_PASSWORD:}
+      authentication-database: admin
+      auto-index-creation: true
+
+    # Redis configuration
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# SpringDoc OpenAPI configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+  packages-to-scan: com.smartenergy.api.controller
+  paths-to-match: /api/v1/**
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,configprops
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    export:
+      prometheus:
+        enabled: true
+
+# Logging configuration
+logging:
+  level:
+    com.smartenergy: DEBUG
+    org.springframework.data.cassandra: DEBUG
+    org.springframework.data.mongodb: DEBUG
+    org.springframework.data.redis: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Custom application properties
+app:
+  sensor:
+    stream:
+      key: sensor:readings
+      consumer-group: measurement-ingestion
+      batch-size: 100
+      poll-timeout: 5000
+  measurement:
+    retention-days: 30
+    aggregation-enabled: true
+  analytics:
+    aggregation-cron: "0 0 * * * *" # hourly
+    alert-check-cron: "0 * * * * *" # every minute

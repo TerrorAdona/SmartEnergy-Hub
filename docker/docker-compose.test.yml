@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Testcontainers-compatible services for integration tests
+  # These use different ports to avoid conflicts with dev environment
+
+  cassandra-test:
+    image: cassandra:4.1
+    container_name: smartenergy-cassandra-test
+    environment:
+      - CASSANDRA_CLUSTER_NAME=test-cluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_USER=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+    ports:
+      - "9142:9042"
+    tmpfs:
+      - /var/lib/cassandra:exec
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -u cassandra -p cassandra -e 'describe keyspaces'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  mongodb-test:
+    image: mongo:7.0
+    container_name: smartenergy-mongodb-test
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=smartenergy_test
+    ports:
+      - "27018:27017"
+    tmpfs:
+      - /data/db:exec
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  redis-test:
+    image: redis:7.4-alpine
+    container_name: smartenergy-redis-test
+    command: redis-server --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6379"
+    tmpfs:
+      - /data:exec
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+      start_period: 5s
+
+networks:
+  default:
+    name: smartenergy-test-network
