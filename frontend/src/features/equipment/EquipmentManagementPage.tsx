@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import { useI18n } from "@/i18n/useI18n";
 
 type EquipmentView = "buildings" | "sensors";
 type ModalView = EquipmentView | null;
@@ -58,12 +59,13 @@ const sensorTypes = [
   "GENERIC",
 ];
 
-function errorText(error: unknown): string | null {
+function errorText(error: unknown, fallback: string): string | null {
   if (error instanceof ApiError || error instanceof Error) return error.message;
-  return error ? "Une erreur inattendue est survenue." : null;
+  return error ? fallback : null;
 }
 
 export function EquipmentManagementPage() {
+  const { t, formatNumber } = useI18n();
   const queryClient = useQueryClient();
   const [view, setView] = useState<EquipmentView>("sensors");
   const [search, setSearch] = useState("");
@@ -131,13 +133,13 @@ export function EquipmentManagementPage() {
   });
 
   const error = [
-    errorText(buildingsQuery.error),
-    errorText(sensorsQuery.error),
-    errorText(buildingSave.error),
-    errorText(sensorSave.error),
-    errorText(buildingDelete.error),
-    errorText(sensorDelete.error),
-    errorText(sensorStatus.error),
+    errorText(buildingsQuery.error, t.common.unexpected),
+    errorText(sensorsQuery.error, t.common.unexpected),
+    errorText(buildingSave.error, t.common.unexpected),
+    errorText(sensorSave.error, t.common.unexpected),
+    errorText(buildingDelete.error, t.common.unexpected),
+    errorText(sensorDelete.error, t.common.unexpected),
+    errorText(sensorStatus.error, t.common.unexpected),
   ].find(Boolean);
 
   const filteredBuildings = buildings.filter((building) => {
@@ -181,7 +183,7 @@ export function EquipmentManagementPage() {
   const removeBuilding = (building: Building) => {
     if (
       window.confirm(
-        `Supprimer « ${building.name} » ? Les bâtiments associés à des capteurs ne peuvent pas être supprimés.`,
+        t.equipment.deleteBuilding(building.name),
       )
     ) {
       buildingDelete.mutate(building.id);
@@ -189,7 +191,7 @@ export function EquipmentManagementPage() {
   };
 
   const removeSensor = (sensor: Sensor) => {
-    if (window.confirm(`Supprimer le capteur « ${sensor.name} » ?`)) {
+    if (window.confirm(t.equipment.deleteSensor(sensor.name))) {
       sensorDelete.mutate(sensor.id);
     }
   };
@@ -203,10 +205,10 @@ export function EquipmentManagementPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Équipements
+            {t.equipment.title}
           </h1>
           <p className="mt-1 text-gray-500 dark:text-gray-400">
-            Gérez les bâtiments et les capteurs associés.
+            {t.equipment.subtitle}
           </p>
         </div>
         <Button
@@ -214,7 +216,7 @@ export function EquipmentManagementPage() {
           disabled={view === "sensors" && buildings.length === 0}
         >
           <Plus className="h-4 w-4" />
-          {view === "buildings" ? "Ajouter un bâtiment" : "Ajouter un capteur"}
+          {view === "buildings" ? t.equipment.addBuilding : t.equipment.addSensor}
         </Button>
       </div>
 
@@ -222,7 +224,7 @@ export function EquipmentManagementPage() {
         <div
           className="flex gap-2"
           role="tablist"
-          aria-label="Type d’équipement"
+          aria-label={t.equipment.kind}
         >
           <Button
             role="tab"
@@ -231,7 +233,7 @@ export function EquipmentManagementPage() {
             onClick={() => setView("buildings")}
           >
             <Building2 className="h-4 w-4" />
-            Bâtiments ({buildings.length})
+            {t.equipment.buildings(buildings.length)}
           </Button>
           <Button
             role="tab"
@@ -240,7 +242,7 @@ export function EquipmentManagementPage() {
             onClick={() => setView("sensors")}
           >
             <Radio className="h-4 w-4" />
-            Capteurs ({sensors.length})
+            {t.equipment.sensors(sensors.length)}
           </Button>
         </div>
         <Button
@@ -248,7 +250,7 @@ export function EquipmentManagementPage() {
           size="sm"
           onClick={retryQueries}
           disabled={buildingsQuery.isFetching || sensorsQuery.isFetching}
-          aria-label="Actualiser les équipements"
+          aria-label={t.equipment.refresh}
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -261,7 +263,7 @@ export function EquipmentManagementPage() {
         >
           <span>{error}</span>
           <Button variant="ghost" size="sm" onClick={retryQueries}>
-            Réessayer
+            {t.common.retry}
           </Button>
         </div>
       )}
@@ -272,8 +274,8 @@ export function EquipmentManagementPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                aria-label="Rechercher"
-                placeholder="Rechercher par nom..."
+                aria-label={t.equipment.search}
+                placeholder={t.equipment.searchPlaceholder}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="pl-10"
@@ -282,12 +284,12 @@ export function EquipmentManagementPage() {
             {view === "sensors" && (
               <div className="flex gap-2">
                 <select
-                  aria-label="Filtrer par type"
+                  aria-label={t.equipment.filterType}
                   value={typeFilter}
                   onChange={(event) => setTypeFilter(event.target.value)}
                   className="input min-w-40"
                 >
-                  <option value="">Tous les types</option>
+                  <option value="">{t.equipment.allTypes}</option>
                   {sensorTypes.map((type) => (
                     <option key={type} value={type}>
                       {type.replace(/_/g, " ")}
@@ -295,14 +297,14 @@ export function EquipmentManagementPage() {
                   ))}
                 </select>
                 <select
-                  aria-label="Filtrer par état"
+                  aria-label={t.equipment.filterStatus}
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                   className="input min-w-36"
                 >
-                  <option value="">Tous les états</option>
-                  <option value="ACTIVE">Actif</option>
-                  <option value="INACTIVE">Inactif</option>
+                  <option value="">{t.equipment.allStatuses}</option>
+                  <option value="ACTIVE">{t.equipment.active}</option>
+                  <option value="INACTIVE">{t.equipment.inactive}</option>
                 </select>
               </div>
             )}
@@ -312,7 +314,7 @@ export function EquipmentManagementPage() {
 
       {isLoading ? (
         <p className="py-10 text-center text-sm text-gray-500" role="status">
-          Chargement des équipements...
+          {t.equipment.loading}
         </p>
       ) : view === "buildings" ? (
         <Card>
@@ -320,11 +322,11 @@ export function EquipmentManagementPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Bâtiment</TableHead>
-                  <TableHead>Emplacement</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Capteurs</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t.equipment.building}</TableHead>
+                  <TableHead>{t.equipment.location}</TableHead>
+                  <TableHead>{t.equipment.description}</TableHead>
+                  <TableHead>{t.equipment.sensorCount}</TableHead>
+                  <TableHead className="text-right">{t.common.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -348,7 +350,7 @@ export function EquipmentManagementPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          aria-label={`Modifier ${building.name}`}
+                          aria-label={t.equipment.edit(building.name)}
                           onClick={() => {
                             setEditingBuilding(building);
                             setModalView("buildings");
@@ -359,7 +361,7 @@ export function EquipmentManagementPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          aria-label={`Supprimer ${building.name}`}
+                          aria-label={t.equipment.remove(building.name)}
                           onClick={() => removeBuilding(building)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -369,7 +371,7 @@ export function EquipmentManagementPage() {
                   </TableRow>
                 ))}
                 {filteredBuildings.length === 0 && (
-                  <EmptyRow colSpan={5} text="Aucun bâtiment trouvé." />
+                  <EmptyRow colSpan={5} text={t.equipment.noBuildings} />
                 )}
               </TableBody>
             </Table>
@@ -381,12 +383,12 @@ export function EquipmentManagementPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Capteur</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Bâtiment</TableHead>
-                  <TableHead>Seuil (kWh)</TableHead>
-                  <TableHead>État</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t.equipment.sensor}</TableHead>
+                  <TableHead>{t.equipment.type}</TableHead>
+                  <TableHead>{t.equipment.building}</TableHead>
+                  <TableHead>{t.equipment.threshold}</TableHead>
+                  <TableHead>{t.equipment.status}</TableHead>
+                  <TableHead className="text-right">{t.common.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -406,10 +408,10 @@ export function EquipmentManagementPage() {
                     <TableCell>
                       {buildings.find(
                         (building) => building.id === sensor.buildingId,
-                      )?.name ?? "Bâtiment introuvable"}
+                      )?.name ?? t.equipment.missingBuilding}
                     </TableCell>
                     <TableCell>
-                      {sensor.consumptionThreshold.toLocaleString()}
+                      {formatNumber(sensor.consumptionThreshold)}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -417,7 +419,7 @@ export function EquipmentManagementPage() {
                           sensor.status === "ACTIVE" ? "success" : "gray"
                         }
                       >
-                        {sensor.status === "ACTIVE" ? "Actif" : "Inactif"}
+                        {sensor.status === "ACTIVE" ? t.equipment.active : t.equipment.inactive}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -425,7 +427,7 @@ export function EquipmentManagementPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          aria-label={`${sensor.status === "ACTIVE" ? "Désactiver" : "Activer"} ${sensor.name}`}
+                          aria-label={t.equipment.toggle(sensor.status === "ACTIVE", sensor.name)}
                           onClick={() =>
                             sensorStatus.mutate({
                               id: sensor.id,
@@ -442,7 +444,7 @@ export function EquipmentManagementPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          aria-label={`Modifier ${sensor.name}`}
+                          aria-label={t.equipment.edit(sensor.name)}
                           onClick={() => {
                             setEditingSensor(sensor);
                             setModalView("sensors");
@@ -453,7 +455,7 @@ export function EquipmentManagementPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          aria-label={`Supprimer ${sensor.name}`}
+                          aria-label={t.equipment.remove(sensor.name)}
                           onClick={() => removeSensor(sensor)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -463,7 +465,7 @@ export function EquipmentManagementPage() {
                   </TableRow>
                 ))}
                 {filteredSensors.length === 0 && (
-                  <EmptyRow colSpan={6} text="Aucun capteur trouvé." />
+                  <EmptyRow colSpan={6} text={t.equipment.noSensors} />
                 )}
               </TableBody>
             </Table>
@@ -474,7 +476,7 @@ export function EquipmentManagementPage() {
       <Modal
         isOpen={modalView === "buildings"}
         onClose={closeModal}
-        title={editingBuilding ? "Modifier le bâtiment" : "Ajouter un bâtiment"}
+        title={editingBuilding ? t.equipment.editBuilding : t.equipment.newBuilding}
         size="lg"
       >
         <BuildingForm
@@ -489,7 +491,7 @@ export function EquipmentManagementPage() {
       <Modal
         isOpen={modalView === "sensors"}
         onClose={closeModal}
-        title={editingSensor ? "Modifier le capteur" : "Ajouter un capteur"}
+        title={editingSensor ? t.equipment.editSensor : t.equipment.newSensor}
         size="lg"
       >
         <SensorForm
@@ -527,6 +529,7 @@ function BuildingForm({
   onSubmit: (input: BuildingInput) => void;
   onCancel: () => void;
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState(initialData?.name ?? "");
   const [location, setLocation] = useState(initialData?.location ?? "");
   const [description, setDescription] = useState(
@@ -542,21 +545,21 @@ function BuildingForm({
       }}
     >
       <Input
-        label="Nom"
+        label={t.equipment.name}
         value={name}
         onChange={(event) => setName(event.target.value)}
         required
         maxLength={120}
       />
       <Input
-        label="Emplacement"
+        label={t.equipment.location}
         value={location}
         onChange={(event) => setLocation(event.target.value)}
         required
         maxLength={250}
       />
       <label className="block">
-        <span className="label">Description</span>
+        <span className="label">{t.equipment.description}</span>
         <textarea
           className="input min-h-24 w-full"
           value={description}
@@ -567,7 +570,7 @@ function BuildingForm({
       <FormActions
         loading={loading}
         onCancel={onCancel}
-        submitLabel={initialData ? "Enregistrer" : "Créer"}
+        submitLabel={initialData ? t.common.save : t.common.create}
       />
     </form>
   );
@@ -586,6 +589,7 @@ function SensorForm({
   onSubmit: (input: SensorInput) => void;
   onCancel: () => void;
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState(initialData?.name ?? "");
   const [type, setType] = useState(initialData?.type ?? "POWER");
   const [buildingId, setBuildingId] = useState(
@@ -613,14 +617,14 @@ function SensorForm({
       }}
     >
       <Input
-        label="Nom"
+        label={t.equipment.name}
         value={name}
         onChange={(event) => setName(event.target.value)}
         required
         maxLength={120}
       />
       <label className="block">
-        <span className="label">Type</span>
+        <span className="label">{t.equipment.type}</span>
         <select
           className="input w-full"
           value={type}
@@ -634,7 +638,7 @@ function SensorForm({
         </select>
       </label>
       <label className="block">
-        <span className="label">Bâtiment</span>
+        <span className="label">{t.equipment.building}</span>
         <select
           className="input w-full"
           value={buildingId}
@@ -650,7 +654,7 @@ function SensorForm({
       </label>
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
-          label="Seuil de consommation (kWh)"
+          label={t.equipment.thresholdInput}
           type="number"
           min="0"
           step="any"
@@ -659,7 +663,7 @@ function SensorForm({
           required
         />
         <label className="block">
-          <span className="label">État</span>
+          <span className="label">{t.equipment.status}</span>
           <select
             className="input w-full"
             value={status}
@@ -667,15 +671,15 @@ function SensorForm({
               setStatus(event.target.value as Sensor["status"])
             }
           >
-            <option value="ACTIVE">Actif</option>
-            <option value="INACTIVE">Inactif</option>
+            <option value="ACTIVE">{t.equipment.active}</option>
+            <option value="INACTIVE">{t.equipment.inactive}</option>
           </select>
         </label>
       </div>
       <FormActions
         loading={loading}
         onCancel={onCancel}
-        submitLabel={initialData ? "Enregistrer" : "Créer"}
+        submitLabel={initialData ? t.common.save : t.common.create}
       />
     </form>
   );
@@ -690,6 +694,7 @@ function FormActions({
   onCancel: () => void;
   submitLabel: string;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
       <Button
@@ -698,7 +703,7 @@ function FormActions({
         onClick={onCancel}
         disabled={loading}
       >
-        Annuler
+        {t.common.cancel}
       </Button>
       <Button type="submit" loading={loading}>
         {submitLabel}

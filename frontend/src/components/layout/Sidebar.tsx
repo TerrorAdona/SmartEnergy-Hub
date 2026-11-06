@@ -11,17 +11,19 @@ import {
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useSidebarStore } from '@/stores/sidebarStore'
+import { useI18n } from '@/i18n/useI18n'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Equipment', href: '/equipment', icon: Zap },
-  { name: 'Measurements', href: '/measurements', icon: BarChart3 },
-  { name: 'Alerts', href: '/alerts', icon: AlertTriangle },
-  { name: 'Settings', href: '/settings', icon: Settings },
-]
+  { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { key: 'equipment', href: '/equipment', icon: Zap },
+  { key: 'measurements', href: '/measurements', icon: BarChart3 },
+  { key: 'alerts', href: '/alerts', icon: AlertTriangle },
+  { key: 'settings', href: '/settings', icon: Settings },
+] as const
 
 export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
   const { toggleSidebar } = useSidebarStore()
+  const { t } = useI18n()
 
   return (
     <aside
@@ -61,18 +63,18 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
               'flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors',
               isCollapsed && 'mx-auto'
             )}
-            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={isCollapsed ? t.nav.expand : t.nav.collapse}
           >
             {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-3 overflow-y-auto" aria-label="Main navigation">
+        <nav className="flex-1 space-y-1 p-3 overflow-y-auto" aria-label={t.nav.main}>
           {!isCollapsed ? (
             navigation.map((item) => (
               <NavLink
-                key={item.name}
+                key={item.key}
                 to={item.href}
                 className={({ isActive }) =>
                   clsx(
@@ -84,13 +86,13 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
                 }
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-                <span>{item.name}</span>
+                <span>{t.nav[item.key]}</span>
               </NavLink>
             ))
           ) : (
             navigation.map((item) => (
               <NavLink
-                key={item.name}
+                key={item.key}
                 to={item.href}
                 className={({ isActive }) =>
                   clsx(
@@ -100,7 +102,7 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
                       : 'text-gray-500 hover:bg-gray-100 dark:text-gray-500 dark:hover:bg-gray-800'
                   )
                 }
-                title={item.name}
+                title={t.nav[item.key]}
               >
                 <item.icon className="h-5 w-5" aria-hidden="true" />
               </NavLink>

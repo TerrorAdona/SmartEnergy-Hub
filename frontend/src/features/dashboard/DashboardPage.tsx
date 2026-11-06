@@ -25,18 +25,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import { useI18n } from "@/i18n/useI18n";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const numberFormat = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 2,
-});
 
-function errorText(error: unknown) {
+function errorText(error: unknown, fallback: string) {
   if (error instanceof ApiError || error instanceof Error) return error.message;
-  return "Une erreur inattendue est survenue.";
+  return fallback;
 }
 
 export function DashboardPage() {
+  const { t, formatNumber, formatDateTime, formatTime } = useI18n();
   const [interval, setInterval] = useState<AggregationInterval>("HOUR");
   const [periodEnd] = useState(() => Date.now());
   const to = new Date(periodEnd);
@@ -72,34 +71,32 @@ export function DashboardPage() {
   const summary = summaryQuery.data;
   const percentChange = summary?.comparison?.changePercent;
   const error = summaryQuery.error || alertsQuery.error;
+  const formatPower = (value: number | null) =>
+    value == null ? "—" : `${formatNumber(value)} kW`;
 
   return (
     <div className="space-y-6 animate-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Dashboard
+            {t.dashboard.title}
           </h1>
           <p className="mt-1 text-gray-500 dark:text-gray-400">
-            {interval === "HOUR"
-              ? "Synthèse mesurée sur 24 heures"
-              : interval === "DAY"
-                ? "Synthèse mesurée sur 7 jours"
-                : "Synthèse mesurée sur 30 jours"}
+            {t.dashboard.periods[interval]}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <select
-            aria-label="Agrégation"
+            aria-label={t.dashboard.aggregation}
             className="input"
             value={interval}
             onChange={(event) =>
               setInterval(event.target.value as AggregationInterval)
             }
           >
-            <option value="HOUR">Par heure</option>
-            <option value="DAY">Par jour</option>
-            <option value="MONTH">Par mois</option>
+            <option value="HOUR">{t.dashboard.hour}</option>
+            <option value="DAY">{t.dashboard.day}</option>
+            <option value="MONTH">{t.dashboard.month}</option>
           </select>
           <Button
             variant="outline"
@@ -110,7 +107,7 @@ export function DashboardPage() {
             loading={summaryQuery.isFetching || alertsQuery.isFetching}
             disabled={summaryQuery.isFetching || alertsQuery.isFetching}
           >
-            <RefreshCw className="h-4 w-4" /> Actualiser
+            <RefreshCw className="h-4 w-4" /> {t.common.refresh}
           </Button>
         </div>
       </div>
@@ -120,53 +117,49 @@ export function DashboardPage() {
           className="flex items-center justify-between gap-4 border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
           role="alert"
         >
-          <span>{errorText(error)}</span>
+          <span>{errorText(error, t.common.unexpected)}</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => void summaryQuery.refetch()}
           >
-            Réessayer
+            {t.common.retry}
           </Button>
         </div>
       )}
 
       {summaryQuery.isLoading ? (
         <p className="py-10 text-center text-sm text-gray-500" role="status">
-          Chargement des statistiques énergétiques...
+          {t.dashboard.loading}
         </p>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
-              label="Bâtiments"
+              label={t.dashboard.buildings}
               value={summary ? String(summary.buildingCount) : "—"}
             />
             <MetricCard
-              label="Capteurs actifs"
+              label={t.dashboard.activeSensors}
               value={summary ? String(summary.activeSensorCount) : "—"}
             />
             <MetricCard
-              label="Énergie consommée"
+              label={t.dashboard.energy}
               value={
                 summary?.totalEnergyKwh == null
                   ? "—"
-                  : `${numberFormat.format(summary.totalEnergyKwh)} kWh`
+                  : `${formatNumber(summary.totalEnergyKwh)} kWh`
               }
               detail={
                 percentChange == null
-                  ? "Comparaison indisponible"
-                  : `${numberFormat.format(percentChange)}% vs période précédente`
+                  ? t.dashboard.noComparison
+                  : t.dashboard.comparison(formatNumber(percentChange))
               }
               trend={percentChange}
             />
             <MetricCard
-              label="Puissance moyenne observée"
-              value={
-                summary?.averagePowerKw == null
-                  ? "—"
-                  : `${numberFormat.format(summary.averagePowerKw)} kW`
-              }
+              label={t.dashboard.averagePower}
+              value={formatPower(summary?.averagePowerKw ?? null)}
             />
           </div>
 
@@ -174,15 +167,10 @@ export function DashboardPage() {
             <CardHeader>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Évolution{" "}
-                  {interval === "HOUR"
-                    ? "horaire"
-                    : interval === "DAY"
-                      ? "journalière"
-                      : "mensuelle"}
+                  {t.dashboard.evolution[interval]}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Énergie intégrée à partir des mesures disponibles (kWh)
+                  {t.dashboard.evolutionHint}
                 </p>
               </div>
             </CardHeader>
@@ -200,22 +188,15 @@ export function DashboardPage() {
                       />
                       <XAxis
                         dataKey="bucketStart"
-                        tickFormatter={(value: string) =>
-                          new Date(value).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        }
+                        tickFormatter={(value: string) => formatTime(value)}
                         minTickGap={24}
                       />
                       <YAxis />
                       <Tooltip
-                        labelFormatter={(value) =>
-                          new Date(String(value)).toLocaleString()
-                        }
+                        labelFormatter={(value) => formatDateTime(String(value))}
                         formatter={(value) => [
-                          `${numberFormat.format(Number(value))} kWh`,
-                          "Énergie",
+                          `${formatNumber(Number(value))} kWh`,
+                          t.dashboard.energySeries,
                         ]}
                       />
                       <Area
@@ -230,7 +211,7 @@ export function DashboardPage() {
                 </div>
               ) : (
                 <p className="py-12 text-center text-sm text-gray-500">
-                  Aucune mesure exploitable sur cette période.
+                  {t.dashboard.noTimeline}
                 </p>
               )}
             </CardBody>
@@ -241,13 +222,13 @@ export function DashboardPage() {
               <CardHeader>
                 <div className="flex w-full items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Dernières mesures
+                    {t.dashboard.recent}
                   </h2>
                   <Link
                     to="/measurements"
                     className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
                   >
-                    Voir l’historique
+                    {t.dashboard.history}
                   </Link>
                 </div>
               </CardHeader>
@@ -255,22 +236,22 @@ export function DashboardPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Heure</TableHead>
-                      <TableHead>Capteur</TableHead>
-                      <TableHead className="text-right">Puissance</TableHead>
+                      <TableHead>{t.dashboard.time}</TableHead>
+                      <TableHead>{t.dashboard.sensor}</TableHead>
+                      <TableHead className="text-right">{t.dashboard.power}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {summary?.recentMeasurements.map((measurement) => (
                       <TableRow key={measurement.measurementId}>
                         <TableCell className="font-mono text-xs">
-                          {new Date(measurement.timestamp).toLocaleString()}
+                          {formatDateTime(measurement.timestamp)}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {measurement.sensorId}
                         </TableCell>
                         <TableCell className="text-right">
-                          {numberFormat.format(measurement.powerKw)} kW
+                          {formatNumber(measurement.powerKw)} kW
                         </TableCell>
                       </TableRow>
                     ))}
@@ -279,8 +260,8 @@ export function DashboardPage() {
                         colSpan={3}
                         text={
                           summary
-                            ? "Aucune mesure disponible."
-                            : "Données indisponibles."
+                            ? t.dashboard.noMeasurements
+                            : t.dashboard.dataUnavailable
                         }
                       />
                     )}
@@ -293,13 +274,13 @@ export function DashboardPage() {
               <CardHeader>
                 <div className="flex w-full items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Alertes récentes
+                    {t.dashboard.recentAlerts}
                   </h2>
                   <Link
                     to="/alerts"
                     className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
                   >
-                    Voir les alertes
+                    {t.dashboard.seeAlerts}
                   </Link>
                 </div>
               </CardHeader>
@@ -312,15 +293,19 @@ export function DashboardPage() {
                     >
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900 dark:text-white">
-                          {alert.sensorName} · {alert.type}
+                          {alert.sensorName} ·{" "}
+                          {alert.type === "POWER_THRESHOLD"
+                            ? t.alerts.powerThreshold
+                            : alert.type.replace(/_/g, " ")}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {alert.buildingName} ·{" "}
-                          {new Date(alert.createdAt).toLocaleString()}
+                          {alert.buildingName} · {formatDateTime(alert.createdAt)}
                         </p>
                         <p className="text-sm">
-                          {numberFormat.format(alert.observedValue)} kW / seuil{" "}
-                          {numberFormat.format(alert.threshold)} kW
+                          {t.dashboard.threshold(
+                            formatNumber(alert.observedValue),
+                            formatNumber(alert.threshold),
+                          )}
                         </p>
                       </div>
                       <Badge
@@ -328,13 +313,15 @@ export function DashboardPage() {
                           alert.status === "ACTIVE" ? "danger" : "warning"
                         }
                       >
-                        {alert.status}
+                        {alert.status === "ACTIVE"
+                          ? t.alerts.active
+                          : t.alerts.acknowledged}
                       </Badge>
                     </div>
                   ))}
                   {!alertsQuery.data?.length && (
                     <p className="p-4 text-sm text-gray-500">
-                      Aucune alerte enregistrée.
+                      {t.dashboard.noAlerts}
                     </p>
                   )}
                 </div>
@@ -345,7 +332,7 @@ export function DashboardPage() {
           <Card>
             <CardHeader>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Consommation par bâtiment
+                {t.dashboard.byBuilding}
               </h2>
             </CardHeader>
             <CardBody className="p-0">
@@ -358,24 +345,24 @@ export function DashboardPage() {
                     <div>
                       <p className="font-medium">{building.name}</p>
                       <p className="text-xs text-gray-500">
-                        {building.measurementCount} mesures · puissance moyenne{" "}
-                        {building.averagePowerKw == null
-                          ? "—"
-                          : `${numberFormat.format(building.averagePowerKw)} kW`}
+                        {t.dashboard.summaryLine(
+                          building.measurementCount,
+                          formatPower(building.averagePowerKw),
+                        )}
                       </p>
                     </div>
                     <span className="font-mono">
                       {building.energyKwh == null
                         ? "—"
-                        : `${numberFormat.format(building.energyKwh)} kWh`}
+                        : `${formatNumber(building.energyKwh)} kWh`}
                     </span>
                   </div>
                 ))}
                 {!summary?.byBuilding.length && (
                   <p className="p-4 text-sm text-gray-500">
                     {summary
-                      ? "Aucune mesure agrégée par bâtiment."
-                      : "Statistiques indisponibles."}
+                      ? t.dashboard.noBuildingAggregate
+                      : t.dashboard.statsUnavailable}
                   </p>
                 )}
               </div>
@@ -385,7 +372,7 @@ export function DashboardPage() {
           <Card>
             <CardHeader>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Consommation par capteur
+                {t.dashboard.bySensor}
               </h2>
             </CardHeader>
             <CardBody className="p-0">
@@ -398,22 +385,22 @@ export function DashboardPage() {
                     <div>
                       <p className="font-medium">{sensor.name}</p>
                       <p className="text-xs text-gray-500">
-                        {sensor.measurementCount} mesures · puissance moyenne{" "}
-                        {sensor.averagePowerKw == null
-                          ? "—"
-                          : `${numberFormat.format(sensor.averagePowerKw)} kW`}
+                        {t.dashboard.summaryLine(
+                          sensor.measurementCount,
+                          formatPower(sensor.averagePowerKw),
+                        )}
                       </p>
                     </div>
                     <span className="font-mono">
                       {sensor.energyKwh == null
                         ? "—"
-                        : `${numberFormat.format(sensor.energyKwh)} kWh`}
+                        : `${formatNumber(sensor.energyKwh)} kWh`}
                     </span>
                   </div>
                 ))}
                 {!summary?.bySensor.length && (
                   <p className="p-4 text-sm text-gray-500">
-                    Aucune mesure agrégée par capteur.
+                    {t.dashboard.noSensorAggregate}
                   </p>
                 )}
               </div>

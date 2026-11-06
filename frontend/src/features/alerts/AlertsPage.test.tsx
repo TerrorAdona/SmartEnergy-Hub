@@ -61,7 +61,7 @@ describe("AlertsPage", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText("POWER THRESHOLD")).toBeInTheDocument();
+    expect(await screen.findByText("Seuil de puissance")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Bâtiment"), {
       target: { value: "building-1" },
     });
@@ -70,7 +70,7 @@ describe("AlertsPage", () => {
         expect.objectContaining({ buildingId: "building-1" }),
       ),
     );
-    expect(await screen.findByText("POWER THRESHOLD")).toBeInTheDocument();
+    expect(await screen.findByText("Seuil de puissance")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Acquitter alert-1" }));
     fireEvent.click(

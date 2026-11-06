@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import { useI18n } from "@/i18n/useI18n";
 
 function localDateTimeValue(date: Date) {
   const localDate = new Date(
@@ -24,12 +25,13 @@ function localDateTimeValue(date: Date) {
   return localDate.toISOString().slice(0, 16);
 }
 
-function errorText(error: unknown) {
+function errorText(error: unknown, fallback: string) {
   if (error instanceof ApiError || error instanceof Error) return error.message;
-  return "Une erreur inattendue est survenue.";
+  return fallback;
 }
 
 export function MeasurementsPage() {
+  const { t, formatDateTime } = useI18n();
   const [sensorId, setSensorId] = useState("");
   const [to, setTo] = useState(() => localDateTimeValue(new Date()));
   const [from, setFrom] = useState(() =>
@@ -82,10 +84,10 @@ export function MeasurementsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Mesures
+            {t.measurements.title}
           </h1>
           <p className="mt-1 text-gray-500 dark:text-gray-400">
-            Historique des mesures énergétiques des capteurs.
+            {t.measurements.subtitle}
           </p>
         </div>
         <div className="flex gap-2">
@@ -94,7 +96,7 @@ export function MeasurementsPage() {
             onClick={exportCsv}
             disabled={!measurements.length}
           >
-            <Download className="h-4 w-4" /> Exporter CSV
+            <Download className="h-4 w-4" /> {t.measurements.export}
           </Button>
           <Button
             variant="outline"
@@ -102,7 +104,7 @@ export function MeasurementsPage() {
             disabled={!validRange || measurementsQuery.isFetching}
             loading={measurementsQuery.isFetching}
           >
-            <RefreshCw className="h-4 w-4" /> Actualiser
+            <RefreshCw className="h-4 w-4" /> {t.common.refresh}
           </Button>
         </div>
       </div>
@@ -112,13 +114,13 @@ export function MeasurementsPage() {
           className="flex items-center justify-between gap-4 border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
           role="alert"
         >
-          <span>{errorText(error)}</span>
+          <span>{errorText(error, t.common.unexpected)}</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => void measurementsQuery.refetch()}
           >
-            Réessayer
+            {t.common.retry}
           </Button>
         </div>
       )}
@@ -126,14 +128,14 @@ export function MeasurementsPage() {
       <Card>
         <CardBody className="grid gap-4 p-4 sm:grid-cols-3">
           <label className="block">
-            <span className="label">Capteur</span>
+            <span className="label">{t.measurements.sensor}</span>
             <select
-              aria-label="Capteur"
+              aria-label={t.measurements.sensor}
               className="input w-full"
               value={sensorId}
               onChange={(event) => setSensorId(event.target.value)}
             >
-              <option value="">Tous les capteurs</option>
+              <option value="">{t.measurements.allSensors}</option>
               {sensors.map((sensor) => (
                 <option key={sensor.id} value={sensor.id}>
                   {sensor.name}
@@ -142,15 +144,15 @@ export function MeasurementsPage() {
             </select>
           </label>
           <Input
-            label="Du"
-            aria-label="Du"
+            label={t.common.from}
+            aria-label={t.common.from}
             type="datetime-local"
             value={from}
             onChange={(event) => setFrom(event.target.value)}
           />
           <Input
-            label="Au"
-            aria-label="Au"
+            label={t.common.to}
+            aria-label={t.common.to}
             type="datetime-local"
             value={to}
             onChange={(event) => setTo(event.target.value)}
@@ -160,11 +162,11 @@ export function MeasurementsPage() {
 
       {!validRange ? (
         <p className="text-sm text-red-600" role="alert">
-          La date de début doit précéder la date de fin.
+          {t.common.rangeError}
         </p>
       ) : measurementsQuery.isLoading ? (
         <p className="py-10 text-center text-sm text-gray-500" role="status">
-          Chargement des mesures...
+          {t.measurements.loading}
         </p>
       ) : (
         <Card>
@@ -172,11 +174,11 @@ export function MeasurementsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date et heure</TableHead>
-                  <TableHead>Capteur</TableHead>
-                  <TableHead className="text-right">Puissance (kW)</TableHead>
-                  <TableHead className="text-right">Tension (V)</TableHead>
-                  <TableHead className="text-right">Température (°C)</TableHead>
+                  <TableHead>{t.measurements.when}</TableHead>
+                  <TableHead>{t.measurements.sensor}</TableHead>
+                  <TableHead className="text-right">{t.measurements.power}</TableHead>
+                  <TableHead className="text-right">{t.measurements.voltage}</TableHead>
+                  <TableHead className="text-right">{t.measurements.temperature}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -185,11 +187,11 @@ export function MeasurementsPage() {
                   return (
                     <TableRow key={measurement.measurementId}>
                       <TableCell className="font-mono text-sm">
-                        {new Date(measurement.timestamp).toLocaleString()}
+                        {formatDateTime(measurement.timestamp)}
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">
-                          {sensor?.name ?? "Capteur"}
+                          {sensor?.name ?? t.measurements.unknownSensor}
                         </div>
                         <div className="font-mono text-xs text-gray-500">
                           {measurement.sensorId}
@@ -215,7 +217,7 @@ export function MeasurementsPage() {
                       colSpan={5}
                       className="py-10 text-center text-gray-500"
                     >
-                      Aucune mesure sur cette période.
+                      {t.measurements.empty}
                     </TableCell>
                   </TableRow>
                 )}
@@ -226,7 +228,7 @@ export function MeasurementsPage() {
       )}
 
       <p className="text-sm text-gray-500">
-        {measurements.length} mesure{measurements.length === 1 ? "" : "s"}
+        {t.measurements.count(measurements.length)}
       </p>
     </div>
   );

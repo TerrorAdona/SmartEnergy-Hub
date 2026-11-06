@@ -16,13 +16,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import { useI18n } from "@/i18n/useI18n";
 
-function errorText(error: unknown) {
+function errorText(error: unknown, fallback: string) {
   if (error instanceof ApiError || error instanceof Error) return error.message;
-  return "Une erreur inattendue est survenue.";
+  return fallback;
 }
 
 export function AlertsPage() {
+  const { t, formatDateTime } = useI18n();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -90,6 +92,8 @@ export function AlertsPage() {
     sensorsQuery.error ||
     buildingsQuery.error ||
     acknowledgeMutation.error;
+  const alertType = (type: string) =>
+    type === "POWER_THRESHOLD" ? t.alerts.powerThreshold : type.replace(/_/g, " ");
   const dateRangeValid = !from || !to || new Date(from) <= new Date(to);
 
   return (
@@ -97,10 +101,10 @@ export function AlertsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Alertes
+            {t.alerts.title}
           </h1>
           <p className="mt-1 text-gray-500 dark:text-gray-400">
-            Dépassements de seuil détectés à partir des mesures reçues.
+            {t.alerts.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -111,8 +115,8 @@ export function AlertsPage() {
           >
             <Bell className="mr-1 h-3 w-3" />{" "}
             {alertsQuery.data
-              ? `${activeCount} active${activeCount === 1 ? "" : "s"}`
-              : "Indisponible"}
+              ? t.alerts.activeCount(activeCount)
+              : t.common.unavailable}
           </Badge>
           <Button
             variant="outline"
@@ -127,7 +131,7 @@ export function AlertsPage() {
             disabled={alertsQuery.isFetching}
             loading={alertsQuery.isFetching}
           >
-            <RefreshCw className="h-4 w-4" /> Actualiser
+            <RefreshCw className="h-4 w-4" /> {t.common.refresh}
           </Button>
         </div>
       </div>
@@ -137,13 +141,13 @@ export function AlertsPage() {
           className="flex items-center justify-between gap-4 border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
           role="alert"
         >
-          <span>{errorText(error)}</span>
+          <span>{errorText(error, t.common.unexpected)}</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => void alertsQuery.refetch()}
           >
-            Réessayer
+            {t.common.retry}
           </Button>
         </div>
       )}
@@ -153,30 +157,30 @@ export function AlertsPage() {
           <div className="relative xl:col-span-2">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
-              aria-label="Rechercher une alerte"
-              placeholder="Capteur, bâtiment, type..."
+              aria-label={t.alerts.search}
+              placeholder={t.alerts.searchPlaceholder}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="pl-10"
             />
           </div>
           <select
-            aria-label="Statut"
+            aria-label={t.alerts.status}
             className="input"
             value={status}
             onChange={(event) => setStatus(event.target.value)}
           >
-            <option value="">Tous les statuts</option>
-            <option value="ACTIVE">Active</option>
-            <option value="ACKNOWLEDGED">Acquittée</option>
+            <option value="">{t.alerts.allStatuses}</option>
+            <option value="ACTIVE">{t.alerts.active}</option>
+            <option value="ACKNOWLEDGED">{t.alerts.acknowledged}</option>
           </select>
           <select
-            aria-label="Bâtiment"
+            aria-label={t.alerts.building}
             className="input"
             value={buildingId}
             onChange={(event) => setBuildingId(event.target.value)}
           >
-            <option value="">Tous les bâtiments</option>
+            <option value="">{t.alerts.allBuildings}</option>
             {(buildingsQuery.data ?? []).map((building) => (
               <option key={building.id} value={building.id}>
                 {building.name}
@@ -184,24 +188,24 @@ export function AlertsPage() {
             ))}
           </select>
           <select
-            aria-label="Type"
+            aria-label={t.alerts.type}
             className="input"
             value={type}
             onChange={(event) => setType(event.target.value)}
           >
-            <option value="">Tous les types</option>
-            <option value="POWER_THRESHOLD">Seuil de puissance</option>
+            <option value="">{t.alerts.allTypes}</option>
+            <option value="POWER_THRESHOLD">{t.alerts.powerThreshold}</option>
           </select>
           <Input
-            label="Du"
-            aria-label="Du"
+            label={t.common.from}
+            aria-label={t.common.from}
             type="datetime-local"
             value={from}
             onChange={(event) => setFrom(event.target.value)}
           />
           <Input
-            label="Au"
-            aria-label="Au"
+            label={t.common.to}
+            aria-label={t.common.to}
             type="datetime-local"
             value={to}
             onChange={(event) => setTo(event.target.value)}
@@ -211,11 +215,11 @@ export function AlertsPage() {
 
       {!dateRangeValid ? (
         <p className="text-sm text-red-600" role="alert">
-          La date de début doit précéder la date de fin.
+          {t.common.rangeError}
         </p>
       ) : alertsQuery.isLoading ? (
         <p className="py-10 text-center text-sm text-gray-500" role="status">
-          Chargement des alertes...
+          {t.alerts.loading}
         </p>
       ) : (
         <Card>
@@ -223,15 +227,13 @@ export function AlertsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Capteur / bâtiment</TableHead>
-                  <TableHead className="text-right">
-                    Observé / seuil (kW)
-                  </TableHead>
-                  <TableHead>Créée</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Acquittée par</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead>{t.alerts.typeColumn}</TableHead>
+                  <TableHead>{t.alerts.sensorBuilding}</TableHead>
+                  <TableHead className="text-right">{t.alerts.observed}</TableHead>
+                  <TableHead>{t.alerts.created}</TableHead>
+                  <TableHead>{t.alerts.status}</TableHead>
+                  <TableHead>{t.alerts.acknowledgedBy}</TableHead>
+                  <TableHead className="text-right">{t.alerts.action}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -242,7 +244,7 @@ export function AlertsPage() {
                     <TableRow key={alert.id}>
                       <TableCell>
                         <div className="font-medium">
-                          {alert.type.replace(/_/g, " ")}
+                          {alertType(alert.type)}
                         </div>
                         <div className="font-mono text-xs text-gray-500">
                           {alert.id}
@@ -261,7 +263,7 @@ export function AlertsPage() {
                         {alert.threshold.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {new Date(alert.createdAt).toLocaleString()}
+                        {formatDateTime(alert.createdAt)}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -269,7 +271,7 @@ export function AlertsPage() {
                             alert.status === "ACTIVE" ? "danger" : "warning"
                           }
                         >
-                          {alert.status === "ACTIVE" ? "Active" : "Acquittée"}
+                          {alert.status === "ACTIVE" ? t.alerts.active : t.alerts.acknowledged}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">
@@ -280,7 +282,7 @@ export function AlertsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            aria-label={`Acquitter ${alert.id}`}
+                            aria-label={t.alerts.acknowledge(alert.id)}
                             onClick={() => setSelectedAlert(alert)}
                           >
                             <CheckCircle className="h-4 w-4" />
@@ -296,7 +298,7 @@ export function AlertsPage() {
                       colSpan={7}
                       className="py-10 text-center text-gray-500"
                     >
-                      Aucune alerte correspondant aux filtres.
+                      {t.alerts.empty}
                     </TableCell>
                   </TableRow>
                 )}
@@ -307,21 +309,24 @@ export function AlertsPage() {
       )}
 
       <p className="text-sm text-gray-500">
-        {alerts.length} alerte{alerts.length === 1 ? "" : "s"}
+        {t.alerts.count(alerts.length)}
       </p>
 
       <Modal
         isOpen={selectedAlert !== null}
         onClose={() => setSelectedAlert(null)}
-        title="Acquitter l’alerte"
+        title={t.alerts.modalTitle}
         description={selectedAlert?.id}
       >
         <div className="space-y-4">
-          <p>Cette alerte restera dans l’historique avec son nouveau statut.</p>
+          <p>{t.alerts.modalBody}</p>
           {selectedAlert && (
             <p className="rounded bg-gray-50 p-3 text-sm dark:bg-gray-800">
-              {selectedAlert.sensorName} · {selectedAlert.observedValue} kW /
-              seuil {selectedAlert.threshold} kW
+              {t.alerts.detail(
+                selectedAlert.sensorName,
+                selectedAlert.observedValue,
+                selectedAlert.threshold,
+              )}
             </p>
           )}
           <div className="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
@@ -330,7 +335,7 @@ export function AlertsPage() {
               onClick={() => setSelectedAlert(null)}
               disabled={acknowledgeMutation.isPending}
             >
-              Annuler
+              {t.common.cancel}
             </Button>
             <Button
               loading={acknowledgeMutation.isPending}
@@ -338,7 +343,7 @@ export function AlertsPage() {
                 selectedAlert && acknowledgeMutation.mutate(selectedAlert.id)
               }
             >
-              Confirmer l’acquittement
+              {t.alerts.confirm}
             </Button>
           </div>
         </div>
