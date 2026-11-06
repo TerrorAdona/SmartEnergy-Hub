@@ -22,6 +22,7 @@ dependencies {
     implementation(project(":modules:core"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-cassandra")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-cache")
 
     testImplementation(project(":modules:core"))

@@ -1,7 +1,7 @@
 # SmartEnergy Hub - Makefile
 # Common development commands
 
-.PHONY: help up down down-v build build-api run-api test test-unit test-integration clean logs logs-% frontend-install frontend-dev frontend-build frontend-test frontend-lint generate-api docker-build docker-push status restart
+.PHONY: help up down down-v build build-api run-api test test-unit test-integration clean logs logs-% frontend-install frontend-dev frontend-build frontend-test frontend-lint generate-api simulate docker-build docker-push status restart
 
 ifeq ($(OS),Windows_NT)
 GRADLEW = gradlew.bat
@@ -24,6 +24,7 @@ help:
 	@echo "  make build           - Build all backend modules"
 	@echo "  make build-api       - Build only API module"
 	@echo "  make run-api         - Run API module (Spring Boot)"
+	@echo "  make simulate        - Run sensor simulator (set SIMULATOR_ARGS)"
 	@echo "  make test            - Run all backend tests"
 	@echo "  make test-unit       - Run unit tests only"
 	@echo "  make test-integration - Run integration tests only"
@@ -68,6 +69,9 @@ build-api:
 
 run-api:
 	cd backend && $(GRADLEW) :modules:api:bootRun --args='--spring.profiles.active=dev'
+
+simulate:
+	node tools/sensor-simulator.mjs $(SIMULATOR_ARGS)
 
 test:
 	cd backend && $(GRADLEW) test

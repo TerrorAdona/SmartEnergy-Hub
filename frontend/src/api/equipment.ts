@@ -34,7 +34,7 @@ const apiBaseUrl = (
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1"
 ).replace(/\/$/, "");
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
     headers: {

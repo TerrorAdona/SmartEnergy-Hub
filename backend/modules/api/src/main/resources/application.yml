@@ -14,18 +14,18 @@ spring:
       write-dates-as-timestamps: false
     property-naming-strategy: SNAKE_CASE
 
-  # Cassandra configuration
-  data:
-    cassandra:
-      contact-points: ${CASSANDRA_HOST:localhost}:${CASSANDRA_PORT:9042}
-      keyspace-name: smartenergy
-      username: ${CASSANDRA_USERNAME:cassandra}
-      password: ${CASSANDRA_PASSWORD:cassandra}
-      schema-action: CREATE_IF_NOT_EXISTS
-      request:
-        timeout: 10s
-        consistency: LOCAL_QUORUM
+  cassandra:
+    contact-points: ${CASSANDRA_HOST:localhost}
+    port: ${CASSANDRA_PORT:9042}
+    keyspace-name: smartenergy
+    username: ${CASSANDRA_USERNAME:cassandra}
+    password: ${CASSANDRA_PASSWORD:cassandra}
+    schema-action: CREATE_IF_NOT_EXISTS
+    request:
+      timeout: 10s
+      consistency: LOCAL_QUORUM
 
+  data:
     # MongoDB configuration
     mongodb:
       uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/smartenergy
@@ -94,8 +94,13 @@ app:
     stream:
       key: sensor:readings
       consumer-group: measurement-ingestion
+      consumer-name: measurement-writer
+      dead-letter-key: sensor:readings:dead-letter
       batch-size: 100
       poll-timeout: 5000
+      poll-interval-ms: 1000
+      pending-idle-time: 30s
+      max-deliveries: 5
   measurement:
     retention-days: 30
     aggregation-enabled: true

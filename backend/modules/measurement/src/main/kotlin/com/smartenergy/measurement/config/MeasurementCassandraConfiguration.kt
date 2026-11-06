@@ -1,0 +1,9 @@
+package com.smartenergy.measurement.config
+
+import com.smartenergy.measurement.repository.EnergyMeasurementRepository
+import org.springframework.context.annotation.Configuration
+import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories
+
+@Configuration
+@EnableCassandraRepositories(basePackageClasses = [EnergyMeasurementRepository::class])
+class MeasurementCassandraConfiguration

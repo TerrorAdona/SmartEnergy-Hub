@@ -23,6 +23,22 @@ cd backend && ./gradlew :modules:api:bootRun --args='--spring.profiles.active=de
 cd frontend && npm install && npm run dev
 ```
 
+### Sensor Simulator
+
+Run the standalone simulator against existing active sensors:
+
+```bash
+node tools/sensor-simulator.mjs --sensor-ids sensor-id-1,sensor-id-2 --interval-seconds 5
+```
+
+Or create simulated sensors in an existing building and stop after one minute:
+
+```bash
+node tools/sensor-simulator.mjs --building-id <building-id> --sensor-count 3 --interval-seconds 2 --duration-seconds 60
+```
+
+Measurements are submitted to `POST /api/v1/measurements`, queued in Redis Streams, and persisted in Cassandra. Query history with `GET /api/v1/measurements?sensorId=<id>&from=<ISO-8601>&to=<ISO-8601>`.
+
 ## Project Structure
 
 ```
