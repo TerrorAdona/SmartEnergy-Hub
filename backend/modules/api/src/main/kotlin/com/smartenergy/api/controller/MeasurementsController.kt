@@ -7,6 +7,8 @@ import com.smartenergy.sensor.ingestion.MeasurementIngestionService
 import com.smartenergy.sensor.registry.dto.EnergyMeasurementSubmission
 import com.smartenergy.sensor.registry.dto.MeasurementEnqueuedResponse
 import com.smartenergy.sensor.registry.service.SensorService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -21,16 +23,19 @@ import java.time.temporal.ChronoUnit
 
 @RestController
 @RequestMapping("/api/v1/measurements")
+@Tag(name = "Measurements", description = "Asynchronous ingestion and time-series history")
 class MeasurementsController(
     private val ingestionService: MeasurementIngestionService,
     private val historyService: MeasurementHistoryService,
     private val sensorService: SensorService
 ) {
     @PostMapping
+    @Operation(summary = "Submit a measurement for asynchronous Redis Streams ingestion")
     fun submit(@Valid @RequestBody request: EnergyMeasurementSubmission): ResponseEntity<MeasurementEnqueuedResponse> =
         ResponseEntity.status(HttpStatus.ACCEPTED).body(ingestionService.enqueue(request))
 
     @GetMapping
+    @Operation(summary = "Read measurements for a sensor and time period")
     fun findHistory(
         @RequestParam(required = false) sensorId: String?,
         @RequestParam(required = false) from: Instant?,

@@ -8,8 +8,8 @@ import java.time.Instant
 
 interface EnergyMeasurementRepository : CassandraRepository<EnergyMeasurement, EnergyMeasurementKey> {
     @Query(
-        "SELECT * FROM energy_measurements_by_sensor_hour " +
-            "WHERE sensor_id = ?0 AND bucket_hour = ?1 AND ts >= ?2 AND ts <= ?3"
+        "SELECT * FROM energy_measurements_by_sensor_day " +
+            "WHERE sensor_id = ?0 AND bucket_day = ?1 AND ts >= ?2 AND ts <= ?3"
     )
-    fun findBucketRange(sensorId: String, bucketHour: Instant, from: Instant, to: Instant): List<EnergyMeasurement>
+    fun findDayRange(sensorId: String, bucketDay: Instant, from: Instant, to: Instant): List<EnergyMeasurement>
 }

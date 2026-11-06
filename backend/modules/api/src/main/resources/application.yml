@@ -12,7 +12,6 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
-    property-naming-strategy: SNAKE_CASE
 
   cassandra:
     contact-points: ${CASSANDRA_HOST:localhost}

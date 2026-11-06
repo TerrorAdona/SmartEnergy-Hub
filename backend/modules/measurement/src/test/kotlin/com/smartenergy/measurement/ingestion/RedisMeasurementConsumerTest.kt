@@ -11,6 +11,7 @@ import org.springframework.data.redis.connection.stream.RecordId
 import org.springframework.data.redis.core.StreamOperations
 import org.springframework.data.redis.core.StringRedisTemplate
 import java.time.Duration
+import java.time.Instant
 import java.util.UUID
 
 class RedisMeasurementConsumerTest {
@@ -44,6 +45,7 @@ class RedisMeasurementConsumerTest {
         val captor = ArgumentCaptor.forClass(EnergyMeasurement::class.java)
         Mockito.verify(repository).save(captor.capture())
         assert(captor.value.key.measurementId == UUID.fromString(record.value["measurementId"]))
+        assert(captor.value.key.bucketDay == Instant.parse("2026-11-06T00:00:00Z"))
         Mockito.verify(streamOperations).acknowledge("sensor:readings", "measurement-ingestion", record.id)
     }
 

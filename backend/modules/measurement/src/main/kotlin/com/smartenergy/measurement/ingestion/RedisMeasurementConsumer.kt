@@ -138,7 +138,7 @@ class RedisMeasurementConsumer(
         return EnergyMeasurement(
             key = EnergyMeasurementKey(
                 sensorId = required("sensorId"),
-                bucketHour = timestamp.truncatedTo(ChronoUnit.HOURS),
+                bucketDay = timestamp.truncatedTo(ChronoUnit.DAYS),
                 timestamp = timestamp,
                 measurementId = UUID.fromString(required("measurementId"))
             ),

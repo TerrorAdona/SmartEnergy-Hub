@@ -19,12 +19,12 @@ class MeasurementHistoryService(private val repository: EnergyMeasurementReposit
         }
 
         val results = mutableListOf<EnergyMeasurementResponse>()
-        var bucketHour = from.truncatedTo(ChronoUnit.HOURS)
-        val lastBucketHour = to.truncatedTo(ChronoUnit.HOURS)
-        while (!bucketHour.isAfter(lastBucketHour)) {
-            repository.findBucketRange(sensorId, bucketHour, from, to)
+        var bucketDay = from.truncatedTo(ChronoUnit.DAYS)
+        val lastBucketDay = to.truncatedTo(ChronoUnit.DAYS)
+        while (!bucketDay.isAfter(lastBucketDay)) {
+            repository.findDayRange(sensorId, bucketDay, from, to)
                 .mapTo(results) { it.toResponse() }
-            bucketHour = bucketHour.plus(1, ChronoUnit.HOURS)
+            bucketDay = bucketDay.plus(1, ChronoUnit.DAYS)
         }
         return results.sortedByDescending(EnergyMeasurementResponse::timestamp)
     }

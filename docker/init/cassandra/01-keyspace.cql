@@ -29,16 +29,16 @@ CREATE TABLE IF NOT EXISTS measurements_by_sensor_hour (
   AND default_time_to_live = 2592000  -- 30 days TTL
   AND gc_grace_seconds = 864000;      -- 10 days
 
--- Energy telemetry queried by sensor and hour; measurement_id makes stream replays idempotent.
-CREATE TABLE IF NOT EXISTS energy_measurements_by_sensor_hour (
+-- Energy telemetry queried by sensor and period; one daily partition bounds history scans.
+CREATE TABLE IF NOT EXISTS energy_measurements_by_sensor_day (
     sensor_id text,
-    bucket_hour timestamp,
+  bucket_day timestamp,
     ts timestamp,
     measurement_id uuid,
     power_kw double,
     voltage double,
     temperature double,
-    PRIMARY KEY ((sensor_id, bucket_hour), ts, measurement_id)
+    PRIMARY KEY ((sensor_id, bucket_day), ts, measurement_id)
 ) WITH CLUSTERING ORDER BY (ts DESC, measurement_id ASC)
   AND compaction = {
     'class': 'TimeWindowCompactionStrategy',

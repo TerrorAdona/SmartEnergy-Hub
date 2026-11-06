@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { RefreshCw } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 import { ApiError, getSensors } from "@/api/equipment";
 import { getMeasurements } from "@/api/measurements";
+import { measurementsToCsv } from "./measurementCsv";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -61,6 +62,19 @@ export function MeasurementsPage() {
   const measurements = measurementsQuery.data ?? [];
   const error = sensorsQuery.error || measurementsQuery.error;
 
+  const exportCsv = () => {
+    const csv = measurementsToCsv(
+      measurements,
+      new Map(sensors.map((sensor) => [sensor.id, sensor.name])),
+    );
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `energy-measurements-${from.slice(0, 10)}-${to.slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6 animate-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -72,15 +86,19 @@ export function MeasurementsPage() {
             Historique des mesures énergétiques des capteurs.
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => void measurementsQuery.refetch()}
-          disabled={!validRange || measurementsQuery.isFetching}
-          loading={measurementsQuery.isFetching}
-        >
-          <RefreshCw className="h-4 w-4" />
-          Actualiser
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportCsv} disabled={!measurements.length}>
+            <Download className="h-4 w-4" /> Exporter CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => void measurementsQuery.refetch()}
+            disabled={!validRange || measurementsQuery.isFetching}
+            loading={measurementsQuery.isFetching}
+          >
+            <RefreshCw className="h-4 w-4" /> Actualiser
+          </Button>
+        </div>
       </div>
 
       {error && (

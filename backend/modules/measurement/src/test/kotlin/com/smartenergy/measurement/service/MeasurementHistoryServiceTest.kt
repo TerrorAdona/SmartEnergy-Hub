@@ -19,7 +19,7 @@ class MeasurementHistoryServiceTest {
     private val repository = Mockito.mock(
         EnergyMeasurementRepository::class.java,
         Answer { invocation: InvocationOnMock ->
-            if (invocation.method.name == "findBucketRange") {
+            if (invocation.method.name == "findDayRange") {
                 measurementsByBucket[invocation.getArgument(1)] ?: emptyList<EnergyMeasurement>()
             } else {
                 Mockito.RETURNS_DEFAULTS.answer(invocation)
@@ -29,22 +29,19 @@ class MeasurementHistoryServiceTest {
     private val service = MeasurementHistoryService(repository)
 
     @Test
-    fun `reads every hourly partition and returns newest measurements first`() {
+    fun `reads every daily partition and returns newest measurements first`() {
         val from = Instant.parse("2026-11-06T10:30:00Z")
         val to = Instant.parse("2026-11-06T12:15:00Z")
-        val buckets = (10L..12L).associate { hour ->
-            val bucket = Instant.parse("2026-11-06T${hour.toString().padStart(2, '0')}:00:00Z")
-            bucket to listOf(measurement(bucket, bucket.plus(10, ChronoUnit.MINUTES)))
-        }
+        val buckets = mapOf(from.truncatedTo(ChronoUnit.DAYS) to listOf(measurement(from, from.plus(10, ChronoUnit.MINUTES))))
         measurementsByBucket.putAll(buckets)
 
         val result = service.findHistory("sensor-1", from, to)
 
-        assertThat(result).hasSize(3)
+        assertThat(result).hasSize(1)
         val expectedTimestamps = buckets.values.flatten().map { it.key.timestamp }.sortedDescending()
         assertThat(result.map { it.timestamp }).containsExactlyElementsOf(expectedTimestamps)
-        assertThat(Mockito.mockingDetails(repository).invocations.count { it.method.name == "findBucketRange" })
-            .isEqualTo(3)
+        assertThat(Mockito.mockingDetails(repository).invocations.count { it.method.name == "findDayRange" })
+            .isEqualTo(1)
     }
 
     @Test

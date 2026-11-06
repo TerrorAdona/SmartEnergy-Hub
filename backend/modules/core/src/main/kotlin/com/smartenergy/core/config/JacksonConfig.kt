@@ -14,6 +14,5 @@ class JacksonConfig {
         return Jackson2ObjectMapperBuilder()
             .modules(JavaTimeModule())
             .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .propertyNamingStrategy(com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE)
     }
 }
