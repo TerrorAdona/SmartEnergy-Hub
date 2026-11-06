@@ -1,8 +1,10 @@
 import { useThemeStore } from '@/stores/themeStore'
 import { useSidebarStore } from '@/stores/sidebarStore'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
-import { Sun, Moon, Layout, Menu, Bell, Database } from 'lucide-react'
+import { Sun, Moon, Layout, Menu, Database } from 'lucide-react'
 import { clsx } from 'clsx'
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
 export function SettingsPage() {
   const { theme, setTheme } = useThemeStore()
@@ -93,52 +95,6 @@ export function SettingsPage() {
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
               </label>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">Compact Tables</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Reduce row padding in data tables</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-              </label>
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
-              <Bell className="h-5 w-5 text-warning-600 dark:text-warning-400" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Configure alert notifications</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardBody>
-          <div className="space-y-4">
-            {['Email', 'Browser Push', 'Webhook', 'Slack'].map((channel) => (
-              <div key={channel} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                    <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{channel}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Receive alerts via {channel.toLowerCase()}</p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" defaultChecked={channel !== 'Slack'} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                </label>
-              </div>
-            ))}
           </div>
         </CardBody>
       </Card>
@@ -160,27 +116,15 @@ export function SettingsPage() {
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500 dark:text-gray-400">Version</dt>
-              <dd className="font-medium text-gray-900 dark:text-white font-mono">0.1.0-dev</dd>
+              <dd className="font-medium text-gray-900 dark:text-white font-mono">0.1.0</dd>
             </div>
             <div>
-              <dt className="text-gray-500 dark:text-gray-400">Environment</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">Development</dd>
+              <dt className="text-gray-500 dark:text-gray-400">Mode</dt>
+              <dd className="font-medium text-gray-900 dark:text-white font-mono">{import.meta.env.MODE}</dd>
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400">API Base URL</dt>
-              <dd className="font-medium text-gray-900 dark:text-white font-mono">http://localhost:8080/api/v1</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500 dark:text-gray-400">Node.js</dt>
-              <dd className="font-medium text-gray-900 dark:text-white font-mono">26.13.0</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500 dark:text-gray-400">React</dt>
-              <dd className="font-medium text-gray-900 dark:text-white font-mono">18.3.1</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500 dark:text-gray-400">Build Tool</dt>
-              <dd className="font-medium text-gray-900 dark:text-white font-mono">Vite 5.3.5</dd>
+              <dd className="font-medium text-gray-900 dark:text-white font-mono break-all">{apiBaseUrl}</dd>
             </div>
           </dl>
         </CardBody>

@@ -1,0 +1,1 @@
+{"timestamp":"2026-11-06T19:01:47.231536087Z","status":500,"error":"Internal Server Error","message":"An unexpected error occurred","path":"/api/v1/buildings/","errorCode":"INTERNAL_ERROR","details":[],"traceId":"7a5403ff-9ca2-4b78-9818-d95478e3fd0a"}

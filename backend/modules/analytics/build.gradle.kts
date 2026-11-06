@@ -22,14 +22,11 @@ dependencies {
     implementation(project(":modules:measurement"))
     implementation(project(":modules:equipment"))
     implementation(project(":modules:sensor"))
-    implementation(project(":modules:sensor"))
 
-    implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-data-cassandra")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     testImplementation(project(":modules:core"))
     testImplementation(project(":modules:measurement"))

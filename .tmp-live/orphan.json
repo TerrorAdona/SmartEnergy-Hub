@@ -1,0 +1,1 @@
+{"timestamp":"2026-11-06T19:02:12.700660158Z","status":404,"error":"Not Found","message":"Building not found with id: missing-building","path":"/api/v1/sensors","errorCode":"RESOURCE_NOT_FOUND","details":[],"traceId":"a8a13f1e-c558-44b1-9a21-a752787806b4"}

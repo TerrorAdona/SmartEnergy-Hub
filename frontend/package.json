@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "generate:api": "openapi-typescript-codegen -i http://localhost:8080/api/v1/v3/api-docs -o src/api/generated --client axios --exportSchemas true --exportServices true"
+    "generate:api": "openapi-typescript-codegen -i http://localhost:8080/v3/api-docs -o src/api/generated --client axios --exportSchemas true --exportServices true"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

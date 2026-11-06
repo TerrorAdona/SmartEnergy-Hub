@@ -2,55 +2,18 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: 'smartenergy-dev'
-    environment: 'development'
-
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets: []
-
-rule_files: []
+    cluster: smartenergy-dev
+    environment: development
 
 scrape_configs:
-  # Prometheus self-monitoring
-  - job_name: 'prometheus'
+  - job_name: prometheus
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
 
-  # Spring Boot Actuator metrics
-  - job_name: 'spring-boot'
-    metrics_path: '/actuator/prometheus'
-    scrape_interval: 10s
+  - job_name: smartenergy-api
+    metrics_path: /actuator/prometheus
+    scrape_interval: 15s
     static_configs:
-      - targets: ['host.docker.internal:8080']
+      - targets: ["backend:8080"]
         labels:
-          application: 'smartenergy-api'
-
-  # Cassandra metrics (if JMX exporter is configured)
-  - job_name: 'cassandra'
-    static_configs:
-      - targets: ['host.docker.internal:7070']
-        labels:
-          application: 'cassandra'
-
-  # MongoDB metrics (if exporter is configured)
-  - job_name: 'mongodb'
-    static_configs:
-      - targets: ['host.docker.internal:9216']
-        labels:
-          application: 'mongodb'
-
-  # Redis metrics (if exporter is configured)
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['host.docker.internal:9121']
-        labels:
-          application: 'redis'
-
-  # Node exporter for host metrics
-  - job_name: 'node'
-    static_configs:
-      - targets: ['host.docker.internal:9100']
-        labels:
-          application: 'node-exporter'
+          application: smartenergy-api

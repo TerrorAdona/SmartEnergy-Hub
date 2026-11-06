@@ -1,7 +1,7 @@
 # SmartEnergy Hub - Makefile
 # Common development commands
 
-.PHONY: help up down down-v build build-api run-api test test-unit test-integration clean logs logs-% frontend-install frontend-dev frontend-build frontend-test frontend-lint generate-api simulate docker-build docker-push status restart
+.PHONY: help up up-infra down down-v build build-api run-api test test-unit test-integration clean logs logs-% frontend-install frontend-dev frontend-build frontend-test frontend-lint generate-api simulate docker-build docker-push status restart
 
 ifeq ($(OS),Windows_NT)
 GRADLEW = gradlew.bat
@@ -14,8 +14,9 @@ help:
 	@echo "SmartEnergy Hub - Development Commands"
 	@echo ""
 	@echo "Infrastructure:"
-	@echo "  make up              - Start all infrastructure (Cassandra, MongoDB, Redis, Prometheus, Grafana)"
-	@echo "  make down            - Stop all infrastructure"
+	@echo "  make up              - Start the full Docker stack"
+	@echo "  make up-infra        - Start Cassandra, MongoDB and Redis only"
+	@echo "  make down            - Stop all services"
 	@echo "  make down-v          - Stop infrastructure and remove volumes"
 	@echo "  make logs            - Follow logs for all services"
 	@echo "  make logs-%          - Follow logs for specific service (e.g., make logs-cassandra)"
@@ -46,19 +47,22 @@ help:
 
 # Infrastructure
 up:
-	docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d
+	docker compose -f docker/docker-compose.yml up -d --build
+
+up-infra:
+	docker compose -f docker/docker-compose.yml up -d cassandra cassandra-init mongodb redis
 
 down:
-	docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml down
+	docker compose -f docker/docker-compose.yml down
 
 down-v:
-	docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml down -v
+	docker compose -f docker/docker-compose.yml down -v
 
 logs:
-	docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml logs -f
+	docker compose -f docker/docker-compose.yml logs -f
 
 logs-%:
-	docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml logs -f $*
+	docker compose -f docker/docker-compose.yml logs -f $*
 
 # Backend
 build:
@@ -108,6 +112,7 @@ generate-api:
 
 # Docker
 docker-build:
+	cd backend && $(GRADLEW) :modules:api:bootJar -x test
 	docker build -t smartenergy/backend:latest -f backend/Dockerfile backend/
 	docker build -t smartenergy/frontend:latest -f frontend/Dockerfile frontend/
 
@@ -117,7 +122,7 @@ docker-push:
 
 # Utility
 status:
-	docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml ps
+	docker compose -f docker/docker-compose.yml ps
 
 restart:
 	$(MAKE) down

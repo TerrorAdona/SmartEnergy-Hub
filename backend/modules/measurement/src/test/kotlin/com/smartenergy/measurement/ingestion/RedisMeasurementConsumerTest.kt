@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito
+import org.springframework.data.redis.RedisSystemException
 import org.springframework.data.redis.connection.stream.MapRecord
 import org.springframework.data.redis.connection.stream.RecordId
 import org.springframework.data.redis.core.StreamOperations
@@ -58,6 +59,18 @@ class RedisMeasurementConsumerTest {
 
         Mockito.verify(streamOperations, Mockito.never())
             .acknowledge(Mockito.anyString(), Mockito.anyString(), Mockito.any(RecordId::class.java))
+    }
+
+    @Test
+    fun `recognizes BUSYGROUP when Redis nests it under the Spring exception`() {
+        val existingGroup = RedisSystemException(
+            "Error in execution",
+            RuntimeException("BUSYGROUP Consumer Group name already exists")
+        )
+        val otherFailure = RedisSystemException("Error in execution", RuntimeException("NOGROUP No such key"))
+
+        assert(existingGroup.hasBusyGroup())
+        assert(!otherFailure.hasBusyGroup())
     }
 
     @Test

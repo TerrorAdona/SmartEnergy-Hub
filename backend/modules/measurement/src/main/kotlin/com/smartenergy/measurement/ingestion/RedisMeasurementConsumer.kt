@@ -67,6 +67,11 @@ class RedisMeasurementConsumer(
         try {
             repository.save(measurement)
             operations.acknowledge(streamKey, consumerGroup, record.id)
+            logger.info(
+                "Persisted measurement {} for sensor {}",
+                measurement.key.measurementId,
+                measurement.key.sensorId
+            )
         } catch (exception: Exception) {
             logger.error(
                 "Measurement ${measurement.key.measurementId} remains pending after persistence failure",
@@ -81,7 +86,7 @@ class RedisMeasurementConsumer(
         try {
             operations.createGroup(streamKey, ReadOffset.from("0-0"), consumerGroup)
         } catch (exception: RedisSystemException) {
-            if (!exception.message.orEmpty().contains("BUSYGROUP", ignoreCase = true)) throw exception
+            if (!exception.hasBusyGroup()) throw exception
         } finally {
             bootstrapId?.let { operations.delete(streamKey, it) }
         }
@@ -151,4 +156,13 @@ class RedisMeasurementConsumer(
     private fun Map<String, String>.required(field: String): String =
         get(field)?.takeIf(String::isNotBlank)
             ?: throw IllegalArgumentException("Missing stream field '$field'")
+}
+
+internal fun Throwable.hasBusyGroup(): Boolean {
+    var current: Throwable? = this
+    while (current != null) {
+        if (current.message.orEmpty().contains("BUSYGROUP", ignoreCase = true)) return true
+        current = current.cause
+    }
+    return false
 }

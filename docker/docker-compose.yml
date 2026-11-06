@@ -1,74 +1,93 @@
-version: '3.8'
-
 services:
-  # Apache Cassandra 4.1 LTS
   cassandra:
     image: cassandra:4.1
     container_name: smartenergy-cassandra
     hostname: cassandra
     environment:
-      - CASSANDRA_CLUSTER_NAME=smartenergy-cluster
-      - CASSANDRA_DC=dc1
-      - CASSANDRA_RACK=rack1
-      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - CASSANDRA_NUM_TOKENS=16
-      - CASSANDRA_USER=cassandra
-      - CASSANDRA_PASSWORD=cassandra
-      - JVM_OPTS=-Xms512M -Xmx512M -Xmn128M
+      CASSANDRA_CLUSTER_NAME: smartenergy-cluster
+      CASSANDRA_DC: dc1
+      CASSANDRA_RACK: rack1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      CASSANDRA_NUM_TOKENS: 16
+      JVM_OPTS: -Xms512M -Xmx512M -Xmn128M
     ports:
       - "9042:9042"
     volumes:
       - cassandra-data:/var/lib/cassandra
-      - ./init/cassandra:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "cqlsh -u cassandra -p cassandra -e 'describe keyspaces'"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES'"]
+      interval: 15s
+      timeout: 15s
+      retries: 30
+      start_period: 180s
     deploy:
       resources:
         limits:
           memory: 1G
-          cpus: '1.0'
+          cpus: "1.0"
         reservations:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
     networks:
       - smartenergy-network
+    restart: unless-stopped
 
-  # MongoDB 7.0
+  cassandra-init:
+    image: cassandra:4.1
+    container_name: smartenergy-cassandra-init
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./init/cassandra/01-keyspace.cql:/schema.cql:ro
+    entrypoint:
+      - bash
+      - -c
+      - |
+        for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
+          if cqlsh cassandra 9042 -f /schema.cql; then
+            echo "Cassandra schema is ready"
+            exit 0
+          fi
+          echo "Schema init attempt $$attempt failed"
+          sleep 3
+        done
+        exit 1
+    networks:
+      - smartenergy-network
+    restart: "no"
+
   mongodb:
     image: mongo:7.0
     container_name: smartenergy-mongodb
     hostname: mongodb
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin
-      - MONGO_INITDB_DATABASE=smartenergy
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: smartenergy
     ports:
       - "27017:27017"
     volumes:
       - mongodb-data:/data/db
-      - ./init/mongodb:/docker-entrypoint-initdb.d
+      - ./init/mongodb:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--username", "admin", "--password", "admin", "--authenticationDatabase", "admin", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 12
       start_period: 20s
     deploy:
       resources:
         limits:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 512M
-          cpus: '0.25'
+          cpus: "0.25"
     networks:
       - smartenergy-network
+    restart: unless-stopped
 
-  # Redis 7.4 with Streams
   redis:
     image: redis:7.4-alpine
     container_name: smartenergy-redis
@@ -88,14 +107,73 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: '0.25'
+          cpus: "0.25"
         reservations:
           memory: 256M
-          cpus: '0.1'
+          cpus: "0.1"
     networks:
       - smartenergy-network
+    restart: unless-stopped
 
-  # Prometheus for metrics
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: smartenergy-backend:local
+    container_name: smartenergy-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CASSANDRA_HOST: cassandra
+      CASSANDRA_PORT: 9042
+      CASSANDRA_LOCAL_DC: dc1
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      MONGO_USERNAME: admin
+      MONGO_PASSWORD: admin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      cassandra-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    networks:
+      - smartenergy-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/v1
+    image: smartenergy-frontend:local
+    container_name: smartenergy-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - smartenergy-network
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v2.54.0
     container_name: smartenergy-prometheus
@@ -103,39 +181,42 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 10s
     networks:
       - smartenergy-network
+    restart: unless-stopped
 
-  # Grafana for visualization
   grafana:
     image: grafana/grafana:11.1.0
     container_name: smartenergy-grafana
     hostname: grafana
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_started
     networks:
       - smartenergy-network
+    restart: unless-stopped
 
 volumes:
   cassandra-data:

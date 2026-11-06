@@ -9,6 +9,7 @@ import com.smartenergy.equipment.building.service.BuildingService
 import com.smartenergy.sensor.registry.dto.EnergyMeasurementSubmission
 import com.smartenergy.sensor.registry.dto.SensorResponse
 import com.smartenergy.sensor.registry.service.SensorService
+import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -24,6 +25,8 @@ class EnergyAlertService(
     private val sensorService: SensorService,
     private val buildingService: BuildingService
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     fun detectPowerThreshold(measurement: EnergyMeasurementSubmission, sensor: SensorResponse): Boolean {
         val threshold = sensor.consumptionThreshold.toDouble()
         if (measurement.powerKw <= threshold || repository.existsByMeasurementId(measurement.measurementId)) {
@@ -41,6 +44,14 @@ class EnergyAlertService(
                     threshold = threshold,
                     createdAt = Instant.now()
                 )
+            )
+            logger.info(
+                "Raised {} alert for sensor {} measurement {} observed={} threshold={}",
+                EnergyAlert.POWER_THRESHOLD,
+                sensor.id,
+                measurement.measurementId,
+                measurement.powerKw,
+                threshold
             )
             true
         } catch (_: DuplicateKeyException) {

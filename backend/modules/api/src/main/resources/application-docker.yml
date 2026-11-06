@@ -1,0 +1,14 @@
+# Profile used by the Docker Compose backend service.
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_USERNAME:admin}:${MONGO_PASSWORD:admin}@${MONGO_HOST:mongodb}:${MONGO_PORT:27017}/smartenergy?authSource=admin
+
+logging:
+  level:
+    root: INFO
+    com.smartenergy: INFO

@@ -1,17 +1,20 @@
 package com.smartenergy.core.config
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.config.annotation.CorsRegistry
-import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
-@EnableWebMvc
-class WebConfig : WebMvcConfigurer {
-	override fun addCorsMappings(registry: CorsRegistry) {
-		registry.addMapping("/api/v1/**")
-			.allowedOrigins("http://localhost:5173", "http://127.0.0.1:5173")
-			.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-			.allowedHeaders("*")
-	}
+class WebConfig(
+    @Value("\${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}")
+    private val allowedOrigins: String
+) : WebMvcConfigurer {
+    override fun addCorsMappings(registry: CorsRegistry) {
+        val origins = allowedOrigins.split(",").map(String::trim).filter(String::isNotEmpty)
+        registry.addMapping("/api/v1/**")
+            .allowedOrigins(*origins.toTypedArray())
+            .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+            .allowedHeaders("*")
+    }
 }

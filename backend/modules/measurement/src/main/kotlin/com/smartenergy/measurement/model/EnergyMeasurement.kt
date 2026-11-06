@@ -21,10 +21,10 @@ data class EnergyMeasurementKey(
     val measurementId: UUID
 )
 
-@Table("energy_measurements_by_sensor_hour")
+@Table("energy_measurements_by_sensor_day")
 data class EnergyMeasurement(
     @PrimaryKey val key: EnergyMeasurementKey,
-    @Column("power_kw") val powerKw: Double,
-    @Column("voltage") val voltage: Double,
-    @Column("temperature") val temperature: Double
+    @field:Column("power_kw") val powerKw: Double,
+    @field:Column("voltage") val voltage: Double,
+    @field:Column("temperature") val temperature: Double
 )

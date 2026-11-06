@@ -71,7 +71,7 @@ class RedisAlertConsumer(
         try {
             operations.createGroup(streamKey, ReadOffset.from("0-0"), consumerGroup)
         } catch (exception: RedisSystemException) {
-            if (!exception.message.orEmpty().contains("BUSYGROUP", ignoreCase = true)) throw exception
+            if (!exception.hasBusyGroup()) throw exception
         } finally {
             bootstrapId?.let { operations.delete(streamKey, it) }
         }
@@ -136,4 +136,13 @@ class RedisAlertConsumer(
 
     private fun Map<String, String>.required(field: String) = get(field)?.takeIf(String::isNotBlank)
         ?: throw IllegalArgumentException("Missing stream field '$field'")
+}
+
+private fun Throwable.hasBusyGroup(): Boolean {
+    var current: Throwable? = this
+    while (current != null) {
+        if (current.message.orEmpty().contains("BUSYGROUP", ignoreCase = true)) return true
+        current = current.cause
+    }
+    return false
 }

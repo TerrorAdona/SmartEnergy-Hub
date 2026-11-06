@@ -1,0 +1,1 @@
+{"timestamp":"2026-11-06T20:31:10.436408595Z","status":404,"error":"Not Found","message":"Sensor not found with id: 6aee2434634533280cd27cbb","path":"/api/v1/measurements","errorCode":"RESOURCE_NOT_FOUND","details":[],"traceId":"7e49cb42-34d8-42fb-ad5d-05cffb6070b2"}

@@ -1,0 +1,1 @@
+{"timestamp":"2026-11-06T19:02:13.086933775Z","status":409,"error":"Conflict","message":"Building 6aee2429634533280cd27cba still has associated sensors","path":"/api/v1/buildings/6aee2429634533280cd27cba","errorCode":"RESOURCE_IN_USE","details":[],"traceId":"0b42aa1a-f01f-4341-bac9-a226b313459b"}

@@ -2,11 +2,10 @@ spring:
   application:
     name: smartenergy-api
 
-  # Server configuration
-  server:
-    port: 8080
-    servlet:
-      context-path: /api/v1
+  task:
+    scheduling:
+      pool:
+        size: 4
 
   # Jackson configuration
   jackson:
@@ -17,9 +16,11 @@ spring:
     contact-points: ${CASSANDRA_HOST:localhost}
     port: ${CASSANDRA_PORT:9042}
     keyspace-name: smartenergy
-    username: ${CASSANDRA_USERNAME:cassandra}
-    password: ${CASSANDRA_PASSWORD:cassandra}
+    local-datacenter: ${CASSANDRA_LOCAL_DC:dc1}
     schema-action: CREATE_IF_NOT_EXISTS
+    connection:
+      connect-timeout: 10s
+      init-query-timeout: 10s
     request:
       timeout: 10s
       consistency: LOCAL_QUORUM
@@ -34,8 +35,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      timeout: 5000ms
+      # Must stay above the Redis Streams BLOCK duration (app.sensor.stream.poll-timeout).
+      timeout: 15s
       lettuce:
         pool:
           max-active: 8
@@ -57,18 +58,21 @@ springdoc:
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
 
-# Actuator configuration
+# Actuator configuration. env and configprops stay closed so secrets are not exposed.
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,env,configprops
+        include: health,info,metrics,prometheus
       base-path: /actuator
   endpoint:
     health:
-      show-details: always
+      show-details: never
       probes:
         enabled: true
+  info:
+    env:
+      enabled: false
   metrics:
     tags:
       application: ${spring.application.name}
@@ -79,16 +83,27 @@ management:
 # Logging configuration
 logging:
   level:
-    com.smartenergy: DEBUG
-    org.springframework.data.cassandra: DEBUG
-    org.springframework.data.mongodb: DEBUG
-    org.springframework.data.redis: DEBUG
+    root: INFO
+    com.smartenergy: INFO
+    org.springframework.data.cassandra: WARN
+    org.springframework.data.mongodb: WARN
+    org.springframework.data.redis: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Controllers declare the /api/v1 prefix. There is no servlet context path.
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+  forward-headers-strategy: framework
 
 # Custom application properties
 app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   sensor:
     stream:
       key: sensor:readings
