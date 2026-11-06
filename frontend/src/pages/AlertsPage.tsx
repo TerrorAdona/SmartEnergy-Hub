@@ -200,7 +200,6 @@ export function AlertsPage() {
             </Button>
             <Button
               onClick={() => {
-                console.log('Acknowledge:', acknowledgingAlert?.id)
                 setShowAckModal(false)
                 setAcknowledgingAlert(null)
               }}

@@ -1,7 +1,13 @@
 # SmartEnergy Hub - Makefile
 # Common development commands
 
-.PHONY: help up down build test clean logs frontend generate-api
+.PHONY: help up down down-v build build-api run-api test test-unit test-integration clean logs logs-% frontend-install frontend-dev frontend-build frontend-test frontend-lint generate-api docker-build docker-push status restart
+
+ifeq ($(OS),Windows_NT)
+GRADLEW = gradlew.bat
+else
+GRADLEW = ./gradlew
+endif
 
 # Default target
 help:
@@ -55,25 +61,25 @@ logs-%:
 
 # Backend
 build:
-	cd backend && ./gradlew build -x test
+	cd backend && $(GRADLEW) build -x test
 
 build-api:
-	cd backend && ./gradlew :modules:api:build -x test
+	cd backend && $(GRADLEW) :modules:api:build -x test
 
 run-api:
-	cd backend && ./gradlew :modules:api:bootRun
+	cd backend && $(GRADLEW) :modules:api:bootRun
 
 test:
-	cd backend && ./gradlew test
+	cd backend && $(GRADLEW) test
 
 test-unit:
-	cd backend && ./gradlew test --tests "*UnitTest*"
+	cd backend && $(GRADLEW) test --tests "*UnitTest*"
 
 test-integration:
-	cd backend && ./gradlew test --tests "*IntegrationTest*"
+	cd backend && $(GRADLEW) test --tests "*IntegrationTest*"
 
 clean:
-	cd backend && ./gradlew clean
+	cd backend && $(GRADLEW) clean
 
 # Frontend
 frontend-install:
@@ -86,7 +92,7 @@ frontend-build:
 	cd frontend && npm run build
 
 frontend-test:
-	cd frontend && npm run test
+	cd frontend && npm run test -- --run
 
 frontend-lint:
 	cd frontend && npm run lint

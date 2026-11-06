@@ -69,7 +69,7 @@ export function MeasurementsPage() {
   }
 
   const handleExport = () => {
-    console.log('Export CSV')
+    return
   }
 
   return (

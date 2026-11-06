@@ -50,7 +50,7 @@ export function EquipmentPage() {
 
   const handleDelete = (id: string) => {
     if (confirm(`Delete equipment ${id}?`)) {
-      console.log('Delete:', id)
+      void id
     }
   }
 
@@ -167,7 +167,7 @@ export function EquipmentPage() {
         <EquipmentForm
           initialData={editingEquipment}
           onSubmit={(data) => {
-            console.log('Submit:', data)
+            void data
             setShowModal(false)
             setEditingEquipment(null)
           }}
@@ -178,9 +178,17 @@ export function EquipmentPage() {
   )
 }
 
+interface EquipmentFormData {
+  equipmentId: string
+  name: string
+  type: string
+  location: string
+  status: string
+}
+
 interface EquipmentFormProps {
   initialData: typeof mockEquipment[0] | null
-  onSubmit: (data: any) => void
+  onSubmit: (data: EquipmentFormData) => void
   onCancel: () => void
 }
 

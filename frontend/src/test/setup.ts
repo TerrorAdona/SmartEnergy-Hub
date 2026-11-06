@@ -30,4 +30,4 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
 }
-globalThis.localStorage = localStorageMock as any
+Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock })
