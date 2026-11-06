@@ -51,11 +51,6 @@ function parseArguments(args) {
     if (options.sensorCount !== undefined && options.sensorCount < 1) {
         throw new Error("--sensor-count must be at least 1");
     }
-    if (!options.sensorIds.length && !options.buildingId) {
-        throw new Error(
-            "Provide --sensor-ids or --building-id to create simulated sensors",
-        );
-    }
     if (options.buildingId && options.sensorIds.length) {
         throw new Error("Use either --sensor-ids or --building-id, not both");
     }
@@ -91,14 +86,22 @@ async function createSensors(options) {
     return sensors;
 }
 
-function sample(sensorId, index) {
+async function activeSensors(options) {
+    const sensors = await request(options.baseUrl, "/sensors");
+    return sensors.filter((sensor) => sensor.status === "ACTIVE");
+}
+
+function sample(sensor, index) {
     const phase = Date.now() / 120_000 + index;
+    const threshold = Number(sensor.consumptionThreshold);
+    const limit = Number.isFinite(threshold) && threshold > 0 ? threshold : 20;
+    const fraction = 0.55 + 0.15 * Math.sin(phase);
     return {
         measurementId: randomUUID(),
-        sensorId,
+        sensorId: sensor.id,
         timestamp: new Date().toISOString(),
         powerKw: Number(
-            (14 + 8 * Math.sin(phase) + Math.random() * 2).toFixed(3),
+            Math.min(limit * 0.9, Math.max(0.01, limit * fraction)).toFixed(3),
         ),
         voltage: Number((230 + (Math.random() - 0.5) * 8).toFixed(2)),
         temperature: Number(
@@ -113,15 +116,26 @@ async function main() {
         options = parseArguments(process.argv.slice(2));
     } catch (error) {
         console.error(
-            `${error.message}\n\nUsage: node tools/sensor-simulator.mjs (--sensor-ids id1,id2 | --building-id id) [--sensor-count 3] [--interval-seconds 5] [--duration-seconds 60] [--base-url http://localhost:8080/api/v1]`,
+            `${error.message}\n\nUsage: node tools/sensor-simulator.mjs [--sensor-ids id1,id2 | --building-id id] [--sensor-count 3] [--interval-seconds 5] [--duration-seconds 60] [--base-url http://localhost:8080/api/v1]\nWithout --sensor-ids or --building-id, every active sensor is simulated.`,
         );
         process.exitCode = 1;
         return;
     }
 
-    const sensors = options.buildingId
-        ? await createSensors(options)
-        : options.sensorIds.map((id) => ({ id }));
+    let sensors;
+    try {
+        sensors = options.buildingId
+            ? await createSensors(options)
+            : options.sensorIds.length
+              ? options.sensorIds.map((id) => ({ id }))
+              : await activeSensors(options);
+        if (!sensors.length) throw new Error("No active sensors to simulate");
+    } catch (error) {
+        console.error(error.message);
+        process.exitCode = 1;
+        return;
+    }
+    const refreshActiveSensors = !options.buildingId && !options.sensorIds.length;
     console.log(
         `Simulating ${sensors.length} sensors every ${options.intervalSeconds}s. Press Ctrl+C to stop.`,
     );
@@ -139,9 +153,16 @@ async function main() {
     const startedAt = Date.now();
     while (!stopping) {
         const cycleStartedAt = Date.now();
+        if (refreshActiveSensors) {
+            try {
+                sensors = await activeSensors(options);
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
         for (const [index, sensor] of sensors.entries()) {
             try {
-                const measurement = sample(sensor.id, index);
+                const measurement = sample(sensor, index);
                 await request(options.baseUrl, "/measurements", measurement);
                 console.log(
                     `${measurement.timestamp} sensor=${sensor.id} power=${measurement.powerKw}kW voltage=${measurement.voltage}V temperature=${measurement.temperature}C`,

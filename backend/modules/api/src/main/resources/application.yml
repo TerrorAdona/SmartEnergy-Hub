@@ -118,6 +118,8 @@ app:
   measurement:
     retention-days: 30
     aggregation-enabled: true
+  simulation:
+    interval-ms: 5000
   analytics:
     aggregation-cron: "0 0 * * * *" # hourly
     alert-check-cron: "0 * * * * *" # every minute

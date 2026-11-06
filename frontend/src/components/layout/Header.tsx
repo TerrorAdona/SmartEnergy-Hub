@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { clsx } from 'clsx'
 import { useThemeStore } from '@/stores/themeStore'
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
+import { SimulationControl } from '@/components/simulation/SimulationControl'
 import { useI18n } from '@/i18n/useI18n'
 
 interface HeaderProps {
@@ -48,6 +49,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         {/* Right side - Actions */}
         <div className="flex items-center gap-2">
+          <SimulationControl />
           <LanguageSwitcher />
           <button
             onClick={toggleTheme}

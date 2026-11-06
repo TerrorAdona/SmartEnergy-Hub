@@ -46,6 +46,16 @@ export const messages = {
         { title: "Rapport quotidien", message: "Synthèse énergétique du 4 novembre", time: "il y a 1 h" },
       ],
     },
+    simulation: {
+      label: "Simulation",
+      on: "En cours",
+      off: "Arrêt",
+      start: "Démarrer la simulation",
+      stop: "Arrêter la simulation",
+      sensors: (count: number) =>
+        count === 1 ? "1 capteur actif" : `${count} capteurs actifs`,
+      failed: "Impossible de changer l’état de la simulation.",
+    },
     settings: {
       title: "Paramètres",
       subtitle: "Préférences d’affichage et informations système",
@@ -243,6 +253,16 @@ export const messages = {
         { title: "Sensor offline", message: "SENSOR-004 stopped reporting", time: "15 min ago" },
         { title: "Daily report ready", message: "Energy summary for Nov 4", time: "1 hour ago" },
       ],
+    },
+    simulation: {
+      label: "Simulation",
+      on: "On",
+      off: "Off",
+      start: "Start simulation",
+      stop: "Stop simulation",
+      sensors: (count: number) =>
+        count === 1 ? "1 active sensor" : `${count} active sensors`,
+      failed: "The simulation state could not be changed.",
     },
     settings: {
       title: "Settings",

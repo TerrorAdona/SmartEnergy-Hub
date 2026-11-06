@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { useI18n } from "@/i18n/useI18n";
+import { useSimulationStore } from "@/stores/simulationStore";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -37,7 +38,14 @@ function errorText(error: unknown, fallback: string) {
 export function DashboardPage() {
   const { t, formatNumber, formatDateTime, formatTime } = useI18n();
   const [interval, setInterval] = useState<AggregationInterval>("HOUR");
-  const [periodEnd] = useState(() => Date.now());
+  const [periodEnd, setPeriodEnd] = useState(() => Date.now());
+  const lastTickAt = useSimulationStore((state) => state.lastTickAt);
+  useEffect(() => {
+    if (!lastTickAt) return;
+    setPeriodEnd((current) =>
+      Date.now() - current >= 15_000 ? Date.now() : current,
+    );
+  }, [lastTickAt]);
   const to = new Date(periodEnd);
   const periodMs =
     interval === "HOUR"

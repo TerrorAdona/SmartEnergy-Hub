@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download, RefreshCw } from "lucide-react";
 import { ApiError, getSensors } from "@/api/equipment";
@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { useI18n } from "@/i18n/useI18n";
+import { useSimulationStore } from "@/stores/simulationStore";
 
 function localDateTimeValue(date: Date) {
   const localDate = new Date(
@@ -33,10 +34,16 @@ function errorText(error: unknown, fallback: string) {
 export function MeasurementsPage() {
   const { t, formatDateTime } = useI18n();
   const [sensorId, setSensorId] = useState("");
+  const [toPinned, setToPinned] = useState(false);
   const [to, setTo] = useState(() => localDateTimeValue(new Date()));
   const [from, setFrom] = useState(() =>
     localDateTimeValue(new Date(Date.now() - 24 * 60 * 60 * 1000)),
   );
+  const lastTickAt = useSimulationStore((state) => state.lastTickAt);
+  useEffect(() => {
+    if (!lastTickAt || toPinned) return;
+    setTo(localDateTimeValue(new Date()));
+  }, [lastTickAt, toPinned]);
 
   const sensorsQuery = useQuery({
     queryKey: ["sensors"],
@@ -155,7 +162,10 @@ export function MeasurementsPage() {
             aria-label={t.common.to}
             type="datetime-local"
             value={to}
-            onChange={(event) => setTo(event.target.value)}
+            onChange={(event) => {
+              setToPinned(true);
+              setTo(event.target.value);
+            }}
           />
         </CardBody>
       </Card>
